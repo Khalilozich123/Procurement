@@ -38,7 +38,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-# --- 3. METADATA LAYER (Simplified & Auto-Init) ---
+
+# --- 3. METADATA LAYER (Self-Healing) ---
   hive-metastore:
     image: apache/hive:3.1.3
     container_name: hive-metastore
@@ -47,13 +48,24 @@ services:
       - "9083:9083"
     environment:
       - SERVICE_NAME=metastore
-      - SKIP_SCHEMA_INIT=true
+      # We handle initialization manually in the command below, so we set this to true to disable the default script
+      - SKIP_SCHEMA_INIT=true 
       - HIVE_SITE_CONF_javax_jdo_option_ConnectionURL=jdbc:derby:/metastore_storage/metastore_db;create=true
     volumes:
       - hive_data:/user/hive/warehouse
       - metastore_db_data:/metastore_storage
-    # OLD COMMAND DELETED. NEW COMMAND BELOW:
-    command: /opt/hive/bin/hive --service metastore
+    # AUTOMATIC FIX SCRIPT:
+    command: >
+      /bin/sh -c "
+        if [ ! -d /metastore_storage/metastore_db ]; then
+          echo 'No existing DB found. Initializing...';
+          /opt/hive/bin/schematool -dbType derby -initSchema;
+        else
+          echo 'Existing DB found. Clearing locks to prevent crashes...';
+          rm -f /metastore_storage/metastore_db/*.lck;
+        fi;
+        echo 'Starting Metastore Service...';
+        /opt/hive/bin/hive --service metastore"
 
   # --- 4. COMPUTE LAYER (Trino/Presto) ---
   trino:
@@ -72,6 +84,21 @@ services:
       - namenode
       - postgres
       - hive-metastore
+  
+  # --- 5. ORCHESTRATION LAYER (The Scheduler) ---
+  scheduler:
+    build: .
+    container_name: scheduler
+    environment:
+      - TZ=Africa/Casablanca  # <--- FORCE MOROCCO TIME
+    restart: always
+    # CRITICAL: Connects this container to the main Docker Brain
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - postgres
+      - namenode
+      - trino
 
 volumes:
   namenode_data:
