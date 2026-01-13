@@ -22,9 +22,9 @@ timeout /t 45 /nobreak >nul
 
 REM 3. Seed Database & Generate Initial Data
 echo.
-echo [3/4] 🇲🇦 Creating Postgres Tables & Seeding Master Data...
+echo [3/4] Creating Postgres Tables & Seeding Master Data...
 echo      (Running script inside the 'scheduler' container)
-docker exec scheduler python scripts/generate_orders_bulk.py
+docker exec scheduler python scripts/generate_orders.py
 if %errorlevel% neq 0 (
     echo ❌ Database seeding failed!
     pause
@@ -43,12 +43,11 @@ if %errorlevel% neq 0 (
 
 echo.
 echo ===================================================
-echo   ✅ INSTALLATION COMPLETE!
+echo    INSTALLATION COMPLETE!
 echo ===================================================
 echo.
-echo 1. Your Dashboard is reachable at: http://localhost:8501
-echo 2. HDFS Navigator is at: http://localhost:9870
-echo 3. The 'scheduler' container is now running in the background.
+echo 1. HDFS Navigator is at: http://localhost:9870
+echo 2. The 'scheduler' container is now running in the background.
 echo    It will automatically run the pipeline every day at 22:00.
 echo.
 pause

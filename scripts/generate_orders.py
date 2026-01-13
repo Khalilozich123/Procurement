@@ -72,7 +72,7 @@ def get_db_connection():
         sys.exit(1)
 
 def seed_database(conn):
-    print("🇲🇦 Seeding Database...")
+    print("Seeding Database...")
     with conn.cursor() as cur:
         for t in ["replenishment_rules", "products", "suppliers", "warehouses", "stores"]: 
             cur.execute(f"DROP TABLE IF EXISTS {t} CASCADE")
@@ -87,7 +87,7 @@ def seed_database(conn):
         for p in MOROCCAN_PRODUCTS: cur.execute("INSERT INTO replenishment_rules VALUES (%s, %s, %s)", (p[0], p[4], p[5]))
         
         cur.execute("CREATE TABLE warehouses (warehouse_id VARCHAR(50) PRIMARY KEY, store_id VARCHAR(50))")
-        # Creating STORES table explicitly as requested before
+        
         cur.execute("CREATE TABLE stores (store_id VARCHAR(50) PRIMARY KEY, name VARCHAR(100))")
         
         for s in STORES: 
@@ -106,7 +106,7 @@ def fetch_master_data(conn):
     return products, stores
 
 def generate_and_process(products, stores, date_str):
-    print(f"🚀 Generating Raw Data (Orders & Inventory) for {date_str}...")
+    print(f"- Generating Raw Data (Orders & Inventory) for {date_str}...")
     if os.path.exists(LOCAL_OUTPUT_DIR):
         for filename in os.listdir(LOCAL_OUTPUT_DIR):
             file_path = os.path.join(LOCAL_OUTPUT_DIR, filename)
@@ -116,7 +116,7 @@ def generate_and_process(products, stores, date_str):
                 elif os.path.isdir(file_path):
                     shutil.rmtree(file_path)
             except Exception as e:
-                print(f"⚠️ Failed to delete {file_path}. Reason: {e}")
+                print(f" Failed to delete {file_path}. Reason: {e}")
     else:
         os.makedirs(LOCAL_OUTPUT_DIR)
     
@@ -180,15 +180,14 @@ def generate_and_process(products, stores, date_str):
                 reserved = random.randint(0, 2)
                 writer.writerow([wh_id, sku, start_stock, reserved])
 
-    # --- 4. Exception Report Only ---
-    # (Removed Compute Net Demand Logic)
+    # --- 4. Exception Report ---
     
     base_path_logs = f"{LOCAL_OUTPUT_DIR}/logs/exceptions"
     os.makedirs(base_path_logs, exist_ok=True)
     report_file = f"{base_path_logs}/report_{date_str}.txt"
     
     with open(report_file, "w") as f:
-        f.write(f"--- GENERATION REPORT: {date_str} ---\n")
+        f.write(f" GENERATION REPORT: {date_str} ---\n")
         f.write(f"Status: {'SUCCESS' if not exceptions else 'WARNING'}\n")
         f.write(f"Processed Orders: {ORDERS_PER_DAY}\n")
         if exceptions:
@@ -204,7 +203,7 @@ def upload_to_hdfs(local_dir, hdfs_target_parent):
     # Determine the folder name (e.g., "dt=2026-01-05" or "exceptions")
     folder_name = os.path.basename(local_dir)
     
-    print(f"📂 Uploading {folder_name} -> {hdfs_target_parent}...")
+    print(f"- Uploading {folder_name} -> {hdfs_target_parent}...")
     
     # 1. Define Paths
     if "logs" in local_dir:
@@ -234,7 +233,7 @@ def upload_to_hdfs(local_dir, hdfs_target_parent):
     
     # 6. Cleanup
     subprocess.run(f"docker exec namenode rm -rf {container_temp}", shell=True)
-    print("✅ Upload complete.")
+    print("- Upload complete.")
 
 if __name__ == "__main__":
     conn = get_db_connection()

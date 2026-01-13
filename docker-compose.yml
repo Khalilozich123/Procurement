@@ -7,8 +7,8 @@ services:
     container_name: namenode
     restart: always
     ports:
-      - "9870:9870" # Web UI
-      - "9000:9000" # IPC
+      - "9870:9870"
+      - "9000:9000"
     env_file:       
       - ./hadoop.env
     environment:
@@ -65,7 +65,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
 
-# --- 3. METADATA LAYER (Self-Healing) ---
+# --- 3. METADATA LAYER ---
   hive-metastore:
     image: apache/hive:3.1.3
     container_name: hive-metastore
@@ -95,7 +95,7 @@ services:
         /opt/hive/bin/hive --service metastore
       "
 
-  # --- 4. COMPUTE LAYER (Trino/Presto) ---
+  # --- 4. COMPUTE LAYER (Trino) ---
   trino:
     image: trinodb/trino:latest
     container_name: trino
@@ -104,9 +104,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      # Mount the whole config directory (Simplest method)
       - ./trino-etc:/etc/trino
-      # Mount the Hadoop config directory so Trino can find core-site.xml
       - ./hadoop-conf:/etc/hadoop/conf
     depends_on:
       - namenode

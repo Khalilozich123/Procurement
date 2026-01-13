@@ -7,7 +7,7 @@ from trino.dbapi import connect
 
 # --- CONFIGURATION ---
 def get_trino_host():
-    # If running inside Docker, use the container name 'trino'
+    # If running inside Docker, we use the container name 'trino'
     if os.path.exists('/.dockerenv'): return "trino"
     return "localhost"
 
@@ -15,7 +15,7 @@ TRINO_HOST = get_trino_host()
 TRINO_PORT = 8080
 TRINO_USER = "admin"
 
-# Update DB Params to use the same logic
+# DB Params
 def get_db_host():
     if os.path.exists('/.dockerenv'): return "postgres"
     return "localhost"
@@ -28,7 +28,6 @@ DB_PARAMS = {
     "password": "password"
 }
 
-# CHANGE DATE HERE IF NEEDED (Default: Today)
 DATE_TO_PROCESS = datetime.now().strftime("%Y-%m-%d")
 LOCAL_OUTPUT_DIR = "./generated_data/supplier_orders_trino"
 
@@ -36,7 +35,7 @@ def get_db_connection():
     return psycopg2.connect(**DB_PARAMS)
 
 def get_master_data(conn):
-    print("🐘 Fetching Master Data from PostgreSQL...")
+    print("- Fetching Master Data from PostgreSQL...")
     with conn.cursor() as cur:
         query = """
         SELECT p.sku, p.name, p.supplier_id, s.name, r.safety_stock, r.moq 
@@ -49,7 +48,7 @@ def get_master_data(conn):
     return data
 
 def run_trino_aggregation(date_str):
-    print(f"🚀 Sending Aggregation Query to Trino for {date_str}...")
+    print(f" Sending Aggregation Query to Trino for {date_str}...")
     
     conn = connect(host=TRINO_HOST, port=TRINO_PORT, user=TRINO_USER, catalog="hive", schema="default")
     cur = conn.cursor()
@@ -85,7 +84,7 @@ def run_trino_aggregation(date_str):
     return rows
 
 def generate_supplier_files(trino_results, master_data, date_str):
-    print("🧠 Calculating Net Demand...")
+    print(" Calculating Net Demand...")
     if os.path.exists(LOCAL_OUTPUT_DIR):
         import shutil
         shutil.rmtree(LOCAL_OUTPUT_DIR)
@@ -125,7 +124,7 @@ def upload_to_hdfs(local_dir, date_str):
     parent_dir = "/output/supplier_orders"
     final_target = f"{parent_dir}/{date_str}"
     
-    print(f"📂 Uploading results to HDFS folder: {final_target} ...")
+    print(f"- Uploading results to HDFS folder: {final_target} ...")
     
     # 1. Clean existing folder for this date (Prevents duplicates/errors)
     subprocess.run(f"docker exec namenode hdfs dfs -rm -r -f {final_target}", shell=True, stderr=subprocess.DEVNULL)
@@ -149,7 +148,7 @@ def upload_to_hdfs(local_dir, date_str):
     
     # 6. Cleanup
     subprocess.run(f"docker exec namenode rm -rf {container_temp}", shell=True)
-    print("✅ Upload complete.")
+    print(" Upload complete.")
 
 if __name__ == "__main__":
     # 1. Get Master Data
@@ -163,5 +162,4 @@ if __name__ == "__main__":
     # 3. Generate & Upload
     output_dir = generate_supplier_files(aggregates, rules, DATE_TO_PROCESS)
     
-    # Pass the date_str to the upload function now!
     upload_to_hdfs(output_dir, DATE_TO_PROCESS)
