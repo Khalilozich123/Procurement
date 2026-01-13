@@ -1,0 +1,17 @@
+# Use Python base image
+FROM python:3.9-slim
+
+# 1. Install System Dependencies & Docker CLI
+# We need 'docker.io' so this container can run "docker exec" commands
+RUN apt-get update && \
+    apt-get install -y docker.io libpq-dev gcc && \
+    rm -rf /var/lib/apt/lists/*
+
+# 2. Set working directory
+WORKDIR /app
+
+# 3. Install Python Libraries
+RUN pip install psycopg2-binary trino pandas faker schedule
+
+# 4. The command to run
+CMD ["python", "-u", "scripts/orchestrator.py"]

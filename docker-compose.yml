@@ -9,6 +9,8 @@ services:
     ports:
       - "9870:9870" # Web UI
       - "9000:9000" # IPC
+    env_file:       
+      - ./hadoop.env
     environment:
       - CLUSTER_NAME=test
       - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
@@ -22,8 +24,32 @@ services:
     environment:
       - SERVICE_PRECONDITION=namenode:9000
       - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+    env_file:       
+      - ./hadoop.env
     volumes:
       - datanode_data:/hadoop/dfs/data
+
+  datanode2:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode2
+    restart: always
+    volumes:
+      - ./hadoop_data/datanode2:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000"
+    env_file:
+      - ./hadoop.env
+
+  datanode3:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode3
+    restart: always
+    volumes:
+      - ./hadoop_data/datanode3:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000"
+    env_file:
+      - ./hadoop.env
 
   # --- 2. OPERATIONAL LAYER (PostgreSQL) ---
   postgres:
@@ -48,24 +74,26 @@ services:
       - "9083:9083"
     environment:
       - SERVICE_NAME=metastore
-      # We handle initialization manually in the command below, so we set this to true to disable the default script
-      - SKIP_SCHEMA_INIT=true 
       - HIVE_SITE_CONF_javax_jdo_option_ConnectionURL=jdbc:derby:/metastore_storage/metastore_db;create=true
     volumes:
       - hive_data:/user/hive/warehouse
       - metastore_db_data:/metastore_storage
-    # AUTOMATIC FIX SCRIPT:
+    entrypoint: /bin/sh
     command: >
-      /bin/sh -c "
-        if [ ! -d /metastore_storage/metastore_db ]; then
-          echo 'No existing DB found. Initializing...';
-          /opt/hive/bin/schematool -dbType derby -initSchema;
+      -c "
+        export HIVE_CONF_DIR=/opt/hive/conf;
+        if [ ! -f /metastore_storage/.schema_initialized ]; then
+          echo 'Initializing schema for the first time...';
+          /opt/hive/bin/schematool -dbType derby -initSchema -verbose &&
+          touch /metastore_storage/.schema_initialized;
         else
-          echo 'Existing DB found. Clearing locks to prevent crashes...';
-          rm -f /metastore_storage/metastore_db/*.lck;
+          echo 'Schema already initialized, skipping...';
         fi;
-        echo 'Starting Metastore Service...';
-        /opt/hive/bin/hive --service metastore"
+        echo 'Removing stale Derby lock files...';
+        rm -f /metastore_storage/metastore_db/*.lck /metastore_storage/metastore_db/db.lck /metastore_storage/metastore_db/dbex.lck;
+        echo 'Starting Hive Metastore...';
+        /opt/hive/bin/hive --service metastore
+      "
 
   # --- 4. COMPUTE LAYER (Trino/Presto) ---
   trino:
@@ -87,18 +115,18 @@ services:
   
   # --- 5. ORCHESTRATION LAYER (The Scheduler) ---
   scheduler:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.scheduler
     container_name: scheduler
-    environment:
-      - TZ=Africa/Casablanca  # <--- FORCE MOROCCO TIME
-    restart: always
-    # CRITICAL: Connects this container to the main Docker Brain
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - postgres
-      - namenode
       - trino
+      - namenode
+    volumes:
+      - ./scripts:/app/scripts
+      - ./generated_data:/app/generated_data 
+      - /var/run/docker.sock:/var/run/docker.sock 
 
 volumes:
   namenode_data:
