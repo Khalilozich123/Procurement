@@ -1,8 +1,8 @@
-# 📦 Pipeline Big Data de Réapprovisionnement (Procurement)
+#  Pipeline Big Data de Réapprovisionnement (Procurement)
 
 Ce projet implémente un pipeline de données complet ("End-to-End") pour automatiser le réapprovisionnement d'une chaîne de supermarchés. Il simule la génération de données de ventes, leur stockage distribué sur un cluster Hadoop, et le calcul des besoins de commande via Trino.
 
-## 🚀 Installation & Démarrage Rapide
+##  Installation & Démarrage Rapide
 
 Ce projet est **entièrement conteneurisé** avec Docker. Vous n'avez pas besoin d'installer Python, Java ou Hadoop sur votre machine.
 
@@ -18,7 +18,7 @@ Nous avons créé des scripts d'installation automatique pour simplifier le dép
 2. Double-cliquez sur le fichier **`installation.bat`**.
 3. Une fenêtre s'ouvrira et installera tout automatiquement (démarrage des conteneurs, peuplement de la base de données, configuration de Trino).
 
-## 🏗️ Architecture du Projet
+##  Architecture du Projet
 
 Le pipeline suit une architecture Big Data moderne :
 
@@ -28,7 +28,7 @@ Le pipeline suit une architecture Big Data moderne :
 4. **Traitement Distribué (Trino) :** Moteur de requête SQL distribué qui joint les données brutes (JSON/CSV sur HDFS) avec les données de référence (PostgreSQL).
 5. **Orchestration (Docker) :** Un conteneur dédié (`scheduler`) automatise l'exécution du pipeline chaque jour à 22h00.
 
-## 🛠️ Dépannage (Troubleshooting)
+##  Dépannage (Troubleshooting)
 
 **Problème :** Erreur "NameNode is in Safe Mode".
 * **Solution :** Le cluster vient de démarrer et vérifie l'intégrité des blocs. Attendez 30 secondes ou forcez la sortie :
