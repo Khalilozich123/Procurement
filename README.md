@@ -15,7 +15,7 @@ Nous avons créé des scripts d'installation automatique pour simplifier le dép
 
 **Pour Windows :**
 1. Ouvrez le dossier du projet.
-2. Double-cliquez sur le fichier **`install_project.bat`**.
+2. Double-cliquez sur le fichier **`installation.bat`**.
 3. Une fenêtre s'ouvrira et installera tout automatiquement (démarrage des conteneurs, peuplement de la base de données, configuration de Trino).
 
 ## 🏗️ Architecture du Projet
@@ -35,4 +35,4 @@ Le pipeline suit une architecture Big Data moderne :
   `docker exec namenode hdfs dfsadmin -safemode leave`
 
 **Problème :** Les scripts Python échouent avec "Connection refused".
-* **Solution :** Assurez-vous d'avoir lancé le projet via `install_project.bat` pour garantir que les conteneurs sont bien connectés au même réseau Docker.
+* **Solution :** Assurez-vous d'avoir lancé le projet via `installion.bat` pour garantir que les conteneurs sont bien connectés au même réseau Docker.
