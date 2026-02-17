@@ -1,8 +1,8 @@
-#  Pipeline Big Data de Réapprovisionnement (Procurement)
+# 📦 Pipeline Big Data de Réapprovisionnement (Procurement)
 
 Ce projet implémente un pipeline de données complet (**"End-to-End"**) pour automatiser le réapprovisionnement d'une chaîne de supermarchés. Il simule la génération de données de ventes, leur stockage distribué sur un cluster Hadoop, et le calcul des besoins de commande via Trino, le tout orchestré par **Apache Airflow**.
 
-##  Installation & Démarrage Rapide
+## 🚀 Installation & Démarrage Rapide
 
 Ce projet est **entièrement conteneurisé** avec Docker. Vous n'avez pas besoin d'installer Python, Java ou Hadoop sur votre machine.
 
@@ -30,7 +30,7 @@ Une fois le démarrage terminé, le pipeline est pilotable via l'interface web d
 
 Vous y trouverez le DAG nommé **`supply_chain_pipeline`**. Activez-le (bouton "Unpause" à gauche) pour lancer l'orchestration des tâches.
 
-##  Architecture du Projet
+## 🏗️ Architecture du Projet
 
 Le pipeline suit une architecture Big Data moderne divisée en 5 couches :
 
@@ -43,7 +43,7 @@ Le pipeline suit une architecture Big Data moderne divisée en 5 couches :
     * Les reprises automatiques en cas d'échec (Retries).
     * L'historique et la centralisation des logs.
 
-##  Dépannage (Troubleshooting)
+## 🛠️ Dépannage (Troubleshooting)
 
 **Problème : Erreur "NameNode is in Safe Mode"**
 * **Cause :** Le cluster Hadoop vient de démarrer et vérifie l'intégrité des blocs de données.
