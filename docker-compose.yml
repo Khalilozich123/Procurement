@@ -9,7 +9,7 @@ services:
     ports:
       - "9870:9870"
       - "9000:9000"
-    env_file:       
+    env_file:
       - ./hadoop.env
     environment:
       - CLUSTER_NAME=test
@@ -24,7 +24,7 @@ services:
     environment:
       - SERVICE_PRECONDITION=namenode:9000
       - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
-    env_file:       
+    env_file:
       - ./hadoop.env
     volumes:
       - datanode_data:/hadoop/dfs/data
@@ -64,8 +64,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-
-# --- 3. METADATA LAYER ---
+  # --- 3. METADATA LAYER ---
   hive-metastore:
     image: apache/hive:3.1.3
     container_name: hive-metastore
@@ -110,21 +109,33 @@ services:
       - namenode
       - postgres
       - hive-metastore
-  
-  # --- 5. ORCHESTRATION LAYER (The Scheduler) ---
-  scheduler:
+
+  # --- 5. ORCHESTRATION LAYER (Airflow) ---
+  airflow:
     build:
       context: .
-      dockerfile: Dockerfile.scheduler
-    container_name: scheduler
+      dockerfile: Dockerfile        # ← uses your custom image with dependencies installed
+    container_name: airflow
+    environment:
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__CORE__EXECUTOR=SequentialExecutor
+      - _AIRFLOW_DB_UPGRADE=true
+      - _AIRFLOW_WWW_USER_CREATE=true
+      - _AIRFLOW_WWW_USER_USERNAME=admin
+      - _AIRFLOW_WWW_USER_PASSWORD=admin
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./generated_data:/opt/airflow/generated_data
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "8081:8080"
+    user: "0:0"
     depends_on:
       - postgres
-      - trino
       - namenode
-    volumes:
-      - ./scripts:/app/scripts
-      - ./generated_data:/app/generated_data 
-      - /var/run/docker.sock:/var/run/docker.sock 
+      - trino
+      - hive-metastore
+    command: airflow standalone
 
 volumes:
   namenode_data:
